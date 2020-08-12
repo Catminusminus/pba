@@ -81,23 +81,21 @@ class BFDManager {
     bfd *bfd_h;
     std::string filename;
     BFDWrapper(const std::string &filename) : filename(filename) {
+      using namespace std::literals::string_literals;
       bfd_h = bfd_openr(filename.c_str(), NULL);
       if (!bfd_h) {
-        throw std::runtime_error(("failed to open binary " + filename + ". " +
-                                  bfd_errmsg(bfd_get_error()))
-                                     .c_str());
+        throw std::runtime_error("failed to open binary "s + filename + ". "s +
+                                 bfd_errmsg(bfd_get_error()));
       }
       if (!bfd_check_format(bfd_h, bfd_object)) {
-        throw std::runtime_error(("file " + filename +
-                                  " does not look like an executable. " +
-                                  bfd_errmsg(bfd_get_error()))
-                                     .c_str());
+        throw std::runtime_error("file "s + filename +
+                                 " does not look like an executable. "s +
+                                 bfd_errmsg(bfd_get_error()));
       }
       bfd_set_error(bfd_error_no_error);
       if (bfd_get_flavour(bfd_h) == bfd_target_unknown_flavour) {
-        throw std::runtime_error(("unrecognized format for binary " + filename +
-                                  ". " + bfd_errmsg(bfd_get_error()))
-                                     .c_str());
+        throw std::runtime_error("unrecognized format for binary "s + filename +
+                                 ". "s + bfd_errmsg(bfd_get_error()));
       }
     }
     ~BFDWrapper() {
@@ -106,6 +104,7 @@ class BFDManager {
       }
     }
     auto load_binary() {
+      using namespace std::literals::string_literals;
       auto entry = bfd_get_start_address(bfd_h);
       auto type_str = bfd_h->xvec->name;
 
@@ -117,9 +116,8 @@ class BFDManager {
           return Binary::Type::PE;
         case bfd_target_unknown_flavour:
         default:
-          throw std::runtime_error((std::string("unsupported binary type ") +
-                                    this->bfd_h->xvec->name)
-                                       .c_str());
+          throw std::runtime_error("unsupported binary type "s +
+                                   this->bfd_h->xvec->name);
         }
       };
 
@@ -135,9 +133,8 @@ class BFDManager {
         case bfd_mach_x86_64:
           return {Binary::Arch::X86, 64};
         default:
-          throw std::runtime_error((std::string("unsupported archtecture ") +
-                                    bfd_info->printable_name)
-                                       .c_str());
+          throw std::runtime_error("unsupported archtecture "s +
+                                   bfd_info->printable_name);
         }
       };
 
@@ -146,15 +143,13 @@ class BFDManager {
       auto n = bfd_get_symtab_upper_bound(bfd_h);
       const auto load_static_symbols = [this](auto n) {
         if (n <= 0)
-          throw std::runtime_error((std::string("failed to read symtab ") +
-                                    bfd_errmsg(bfd_get_error()))
-                                       .c_str());
+          throw std::runtime_error("failed to read symtab "s +
+                                   bfd_errmsg(bfd_get_error()));
         auto bfd_symtab = make_unique_with_malloc<asymbol *>(n);
         auto nsyms = bfd_canonicalize_symtab(this->bfd_h, bfd_symtab.get());
         if (nsyms < 0)
-          throw std::runtime_error((std::string("failed to read symtab ") +
-                                    bfd_errmsg(bfd_get_error()))
-                                       .c_str());
+          throw std::runtime_error("failed to read symtab "s +
+                                   bfd_errmsg(bfd_get_error()));
         std::vector<Symbol> symbols;
         for (std::size_t i = 0; i < nsyms; ++i) {
           if (bfd_symtab.get()[i]->flags & BSF_FUNCTION) {
@@ -170,18 +165,14 @@ class BFDManager {
       auto m = bfd_get_dynamic_symtab_upper_bound(bfd_h);
       const auto load_dynamic_symbols = [this](auto n) {
         if (n <= 0)
-          throw std::runtime_error(
-              (std::string("failed to read dynamic symtab ") +
-               bfd_errmsg(bfd_get_error()))
-                  .c_str());
+          throw std::runtime_error("failed to read dynamic symtab "s +
+                                   bfd_errmsg(bfd_get_error()));
         auto bfd_dynsym = make_unique_with_malloc<asymbol *>(n);
         auto nsyms =
             bfd_canonicalize_dynamic_symtab(this->bfd_h, bfd_dynsym.get());
         if (nsyms < 0)
-          throw std::runtime_error(
-              (std::string("failed to read dynamic symtab ") +
-               bfd_errmsg(bfd_get_error()))
-                  .c_str());
+          throw std::runtime_error("failed to read dynamic symtab "s +
+                                   bfd_errmsg(bfd_get_error()));
         std::vector<Symbol> symbols;
         for (std::size_t i = 0; i < nsyms; ++i) {
           if (bfd_dynsym.get()[i]->flags & BSF_FUNCTION) {
@@ -214,10 +205,8 @@ class BFDManager {
           auto bytes = make_unique_with_malloc<uint8_t>(size);
           if (!bfd_get_section_contents(this->bfd_h, bfd_sec, bytes.get(), 0,
                                         size)) {
-            throw std::runtime_error((std::string("failed to read section ") +
-                                      secname + ". " +
-                                      bfd_errmsg(bfd_get_error()))
-                                         .c_str());
+            throw std::runtime_error("failed to read section "s + secname +
+                                     ". "s + bfd_errmsg(bfd_get_error()));
           }
           sections.emplace_back(secname, get_sectype(bfd_flags), vma, size,
                                 std::move(bytes));
