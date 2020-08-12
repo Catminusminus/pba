@@ -239,7 +239,7 @@ public:
 
 public:
   static BFDManager &initialize() {
-    static BFDManager bfd_manager; // private なコンストラクタを呼び出す。
+    static BFDManager bfd_manager;
     return bfd_manager;
   }
   auto load_binary(const std::string &filename) {
