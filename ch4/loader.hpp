@@ -25,20 +25,19 @@ struct Symbol;
 
 struct Symbol {
   enum class Type { UNK, FUNC };
-  Type type = Type::UNK;
+  Type type;
   std::string name;
-  uint64_t addr = 0;
+  uint64_t addr;
   Symbol(Type type, const std::string &name, uint64_t addr)
       : type(type), name(name), addr(addr) {}
 };
 
 struct Section {
   enum class Type { NONE, CODE, DATA };
-  // Binary *binary = nullptr;
   std::string name;
-  Type type = Type::NONE;
-  uint64_t vma = 0;
-  uint64_t size = 0;
+  Type type;
+  uint64_t vma;
+  uint64_t size;
   std::unique_ptr<uint8_t, decltype(&std::free)> bytes;
   Section(const std::string &name, Type type, uint64_t vma, uint64_t size,
           std::unique_ptr<uint8_t, decltype(&std::free)> &&bytes)
@@ -50,12 +49,12 @@ struct Binary {
   enum class Type { AUTO, ELF, PE };
   enum class Arch { NONE, X86 };
   std::string filename;
-  Type type = Type::AUTO;
+  Type type;
   std::string type_str;
-  Arch arch = Arch::NONE;
+  Arch arch;
   std::string arch_str;
-  unsigned int bits = 0;
-  uint64_t entry = 0;
+  unsigned int bits;
+  uint64_t entry;
   std::vector<Section> sections;
   std::vector<Symbol> symbols;
   Binary(const std::string &filename, Type type, const std::string &type_str,
